@@ -184,3 +184,90 @@ const { return status; }
         return Appointment(aId, pId, dId, date, time, reason, status);
     }
 };
+class Patient : public Person {
+private:
+    string bloodGroup;
+    string medicalHistory;
+    vector<string> appointmentIds;
+
+public:
+    Patient(const string& id, const string& name, int age,
+            const string& gender, const string& phone,
+            const string& bloodGroup, const string& medicalHistory)
+        : Person(id, name, age, gender, phone),
+          bloodGroup(bloodGroup), medicalHistory(medicalHistory) {}
+
+    ~Patient() override {
+        appointmentIds.clear();
+    }
+
+    string getBloodGroup()     const { return bloodGroup; }
+    string getMedicalHistory() const { return medicalHistory; }
+    const vector<string>& getAppointmentIds() const { return appointmentIds; }
+
+    void setBloodGroup(const string& bg)     { bloodGroup = bg; }
+    void setMedicalHistory(const string& mh) { medicalHistory = mh; }
+
+    void addAppointmentId(const string& aId) {
+        appointmentIds.push_back(aId);
+    }
+
+    void removeAppointmentId(const string& aId) {
+        appointmentIds.erase(
+            remove(appointmentIds.begin(), appointmentIds.end(), aId),
+            appointmentIds.end()
+        );
+    }
+
+    void displayInfo() const override {
+        cout << "  [PATIENT RECORD]\n";
+        printLine();
+        cout << "  ID             : " << id          << "\n";
+        cout << "  Name           : " << name        << "\n";
+        cout << "  Age            : " << age         << "\n";
+        cout << "  Gender         : " << gender      << "\n";
+        cout << "  Phone          : " << phone       << "\n";
+        cout << "  Blood Group    : " << bloodGroup  << "\n";
+        cout << "  Medical History: " << medicalHistory << "\n";
+        cout << "  Appointments   : " << appointmentIds.size() << " record(s)\n";
+    }
+
+    string getType() const override { return "Patient"; }
+
+    void saveToFile(ofstream& ofs) const override {
+        string apptStr = "";
+        for (size_t i = 0; i < appointmentIds.size(); i++) {
+            apptStr += appointmentIds[i];
+            if (i + 1 < appointmentIds.size()) apptStr += ",";
+        }
+        ofs << "PATIENT|" << id << "|" << name << "|" << age << "|"
+            << gender << "|" << phone << "|" << bloodGroup << "|"
+            << medicalHistory << "|" << apptStr << "\n";
+    }
+
+    static Patient* loadFromLine(const string& line) {
+        istringstream ss(line);
+        string tag, id, name, ageStr, gender, phone, bg, mh, apptStr;
+        getline(ss, tag,    '|');
+        getline(ss, id,     '|');
+        getline(ss, name,   '|');
+        getline(ss, ageStr, '|');
+        getline(ss, gender, '|');
+        getline(ss, phone,  '|');
+        getline(ss, bg,     '|');
+        getline(ss, mh,     '|');
+        getline(ss, apptStr,'|');
+
+        Patient* p = new Patient(id, name, stoi(ageStr), gender, phone, bg, mh);
+
+        if (!apptStr.empty()) {
+            istringstream apptSS(apptStr);
+            string aId;
+            while (getline(apptSS, aId, ',')) {
+                if (!aId.empty()) p->addAppointmentId(aId);
+            }
+        }
+        return p;
+    }
+};
+
